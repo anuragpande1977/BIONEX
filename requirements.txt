@@ -1,1 +1,7 @@
+pandas
+spacy
+gdown
+pyvis
+streamlit
+openpyxl  # for reading Excel files
 
