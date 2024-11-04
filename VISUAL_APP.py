@@ -103,8 +103,8 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
-    # Initialize Pyvis network graph
-    net = Network(height="500px", width="100%", bgcolor="#222222", font_color="white")
+    # Initialize Pyvis network graph with full page dimensions
+    net = Network(height="100vh", width="100vw", bgcolor="#222222", font_color="white")  # 'vh' and 'vw' for full viewport height and width
     
     # Add nodes with titles
     for entity, titles in entity_to_titles.items():
@@ -116,10 +116,39 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
     
-    # Save the graph directly without additional processing
+    # Save the graph to HTML with full page width and height
     html_path = "graph_download.html"
     net.save_graph(html_path)
+
+    # Override CSS styling for full-screen display in HTML content
+    with open(html_path, "r") as file:
+        html_content = file.read()
+
+    # Add CSS to make sure it stretches to full page
+    full_page_css = """
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #mynetwork {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+    """
+    # Insert the CSS at the beginning of the HTML content
+    html_content = html_content.replace("<head>", f"<head>{full_page_css}")
+
+    # Overwrite the HTML file with the modified content
+    with open(html_path, "w") as file:
+        file.write(html_content)
+    
     return html_path
+
 
 # Streamlit UI
 st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
