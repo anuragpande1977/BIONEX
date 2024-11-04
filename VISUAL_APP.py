@@ -186,6 +186,3 @@ if st.session_state["html_path"]:
     if os.path.exists(st.session_state["html_path"]):
         os.remove(st.session_state["html_path"])
         st.session_state["html_path"] = None
-
-            os.remove(html_path)
-
