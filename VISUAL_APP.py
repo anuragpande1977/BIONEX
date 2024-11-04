@@ -8,6 +8,7 @@ from io import BytesIO
 import streamlit as st
 import gdown
 import zipfile
+from bs4 import BeautifulSoup
 
 # Download and load the SpaCy model from Google Drive
 @st.cache_resource
@@ -118,6 +119,20 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     # Save graph to HTML file
     html_path = "graph_download.html"
     net.save_graph(html_path)
+    
+    # Clean up the HTML to remove extraneous content
+    with open(html_path, "r") as file:
+        html_content = file.read()
+    soup = BeautifulSoup(html_content, "html.parser")
+    
+    # Only keep the actual graph div, if possible
+    graph_div = soup.find("div", {"id": "mynetwork"})
+    clean_html = str(graph_div) if graph_div else html_content
+    
+    # Overwrite the HTML file with cleaned content
+    with open(html_path, "w") as file:
+        file.write(clean_html)
+
     return html_path
 
 # Streamlit UI
@@ -144,15 +159,17 @@ if st.button("Fetch PubMed Articles"):
         if articles:
             excel_data, df = save_to_excel(articles)
             st.session_state["df"] = df  # Save the DataFrame in session state
-            st.download_button(
-                label="Download PubMed Articles as Excel",
-                data=excel_data,
-                file_name="pubmed_articles.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            st.session_state["excel_data"] = excel_data  # Save excel data in session state
             st.write("Excel file ready for entity extraction.")
-        else:
-            st.write("No articles found.")
+
+# Show Download Button for Excel File if Data Exists
+if "excel_data" in st.session_state and st.session_state["excel_data"]:
+    st.download_button(
+        label="Download PubMed Articles as Excel",
+        data=st.session_state["excel_data"],
+        file_name="pubmed_articles.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # Entity Extraction and Visualization
 if st.session_state["df"] is not None:
@@ -186,3 +203,4 @@ if st.session_state["html_path"]:
     if os.path.exists(st.session_state["html_path"]):
         os.remove(st.session_state["html_path"])
         st.session_state["html_path"] = None
+
