@@ -102,33 +102,28 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
-    net = Network(height="800px", width="100%", bgcolor="#222222", font_color="white")
-    net.force_atlas_2based()
-    entity_colors = {'DISEASE': '#f68b24', 'CHEMICAL': '#ffffff'}
+    """
+    Generates an HTML file of the graph for download using Pyvis.
+    """
+    net = Network(height="500px", width="100%", bgcolor="#222222", font_color="white")
     
+    # Add nodes with titles
     for entity, titles in entity_to_titles.items():
-        color = entity_colors.get(entity.split('_')[0], "#999999")
         title = "<br>".join(titles)
-        net.add_node(entity, title=title, color=color)
-
+        net.add_node(entity, title=title)
+    
+    # Add edges
     for _, row in kg_df.iterrows():
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
     
-    # Save graph and provide download option
-    net.save_graph("graph.html")
-    with open("graph.html", "r") as file:
-        html_content = file.read()
-    st.download_button(
-        label="Download HTML Visualization",
-        data=html_content,
-        file_name="entity_relationship_graph.html",
-        mime="text/html"
-    )
-    # Display the graph inline
-    st.components.v1.html(html_content, height=800)
+    # Save graph to HTML file
+    html_path = "graph_download.html"
+    net.save_graph(html_path)
+    
+    return html_path
 
-# Streamlit Interface
+# Streamlit UI
 st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
 
 # PubMed Input Fields
@@ -159,10 +154,25 @@ if st.button("Fetch PubMed Articles"):
 if 'df' in locals():
     entity_types_input = st.text_input("Enter entity types (e.g., CHEMICAL, DISEASE)", "CHEMICAL, DISEASE")
     allowed_rel_input = st.text_input("Enter allowed relationships (e.g., CHEMICAL-DISEASE)")
-    if st.button("Process and Visualize"):
+    if st.button("Process and Generate Graph for Download"):
         entity_types = [et.strip() for et in entity_types_input.split(",")]
         allowed_relationships = [tuple(rel.strip().split("-")) for rel in allowed_rel_input.split(",") if "-" in rel]
         
         kg_df, entity_to_titles = process_abstracts_from_excel(df, entity_types, allowed_relationships)
         st.write(f"Processed {len(kg_df)} relationships for visualization.")
-        visualize_graph_interactive(kg_df, entity_to_titles)
+        
+        # Generate HTML graph and provide download button
+        html_path = visualize_graph_interactive(kg_df, entity_to_titles)
+        with open(html_path, "r") as file:
+            html_content = file.read()
+            st.download_button(
+                label="Download HTML Visualization",
+                data=html_content,
+                file_name="entity_relationship_graph.html",
+                mime="text/html"
+            )
+        
+        # Optional cleanup
+        if os.path.exists(html_path):
+            os.remove(html_path)
+
