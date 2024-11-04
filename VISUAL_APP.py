@@ -135,6 +135,15 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
     
+    # Configure physics for a less elastic and more stable layout
+    net.force_atlas_2based(
+        gravity=-50,           # Reduce gravity to prevent nodes from clustering too closely
+        central_gravity=0.001,  # Low central gravity to avoid nodes pulling to the center
+        spring_length=200,      # Increase spring length to spread nodes further apart
+        spring_strength=0.01,   # Lower spring strength for softer "elastic" effect
+        damping=0.6             # Set damping to moderate to slow down movements
+    )
+
     # Save the graph to HTML with full page width and height
     html_path = "graph_download.html"
     net.save_graph(html_path)
@@ -167,7 +176,6 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         file.write(html_content)
     
     return html_path
-
 
 
 # Streamlit UI
