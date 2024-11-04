@@ -133,29 +133,38 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
                 rows.append({'source': entity1[0], 'target': entity2[0], 'edge': f"{entity1[1]}_to_{entity2[1]}"})
     return pd.DataFrame(rows), entity_to_titles
 
+from pyvis.network import Network
+
 def visualize_graph_interactive(kg_df, entity_to_titles):
+    """
+    Visualizes the graph of entities, their relationships, and associated paper titles interactively using Pyvis,
+    with specified colors for each entity type.
+    """
     net = Network(height="800px", width="100%", bgcolor="#222222", font_color="white")
     net.force_atlas_2based()
+
     entity_colors = {'DISEASE': '#f68b24', 'CHEMICAL': '#ffffff'}
     
+    # Add all nodes first
+    for entity, titles in entity_to_titles.items():
+        color = entity_colors.get(entity.split('_')[0], "#999999")  # Default color if not found
+        title = "<br>".join(titles)
+        net.add_node(entity, title=title, color=color)
+
+    # Add edges only if nodes exist
     for _, row in kg_df.iterrows():
-        source_color = entity_colors.get(row['source'].split('_')[0], "#999999")
-        net.add_node(row['source'], color=source_color)
-        net.add_edge(row['source'], row['target'], title=row['edge'])
+        source = row['source']
+        target = row['target']
+        
+        if source in net.get_nodes() and target in net.get_nodes():
+            net.add_edge(source, target, title=row['edge'])
+        else:
+            print(f"Warning: Edge from {source} to {target} cannot be added because one of the nodes is missing.")
     
+    # Render the network as an HTML component in Streamlit
     net.show("graph.html")
     st.components.v1.html(open("graph.html", "r").read(), height=800)
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
-    entity_types_input = st.text_input("Enter entity types (e.g., CHEMICAL, DISEASE)", "CHEMICAL, DISEASE")
-    allowed_rel_input = st.text_input("Allowed relationships (e.g., CHEMICAL-DISEASE)")
-
-    if st.button("Process and Visualize"):
-        entity_types = [et.strip() for et in entity_types_input.split(",")]
-        allowed_relationships = [tuple(rel.strip().split("-")) for rel in allowed_rel_input.split(",") if "-" in rel]
-        kg_df, entity_to_titles = process_abstracts_from_excel(df, entity_types, allowed_relationships)
-        visualize_graph_interactive(kg_df, entity_to_titles)
 
 
 
