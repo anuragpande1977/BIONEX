@@ -28,6 +28,7 @@ def download_and_load_model():
 
     return spacy.load(nested_model_dir)
 
+# Initialize SpaCy model
 try:
     nlp = download_and_load_model()
     st.write("SpaCy model loaded successfully.")
@@ -102,9 +103,6 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
-    """
-    Generates an HTML file of the graph for download using Pyvis.
-    """
     net = Network(height="500px", width="100%", bgcolor="#222222", font_color="white")
     
     # Add nodes with titles
@@ -120,11 +118,16 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     # Save graph to HTML file
     html_path = "graph_download.html"
     net.save_graph(html_path)
-    
     return html_path
 
 # Streamlit UI
 st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
+
+# Store data in session state to persist across interactions
+if "df" not in st.session_state:
+    st.session_state["df"] = None
+if "html_path" not in st.session_state:
+    st.session_state["html_path"] = None
 
 # PubMed Input Fields
 email = st.text_input("Enter your email for PubMed access:")
@@ -140,6 +143,7 @@ if st.button("Fetch PubMed Articles"):
         articles = fetch_abstracts(query, num_articles, email)
         if articles:
             excel_data, df = save_to_excel(articles)
+            st.session_state["df"] = df  # Save the DataFrame in session state
             st.download_button(
                 label="Download PubMed Articles as Excel",
                 data=excel_data,
@@ -151,9 +155,11 @@ if st.button("Fetch PubMed Articles"):
             st.write("No articles found.")
 
 # Entity Extraction and Visualization
-if 'df' in locals():
+if st.session_state["df"] is not None:
+    df = st.session_state["df"]
     entity_types_input = st.text_input("Enter entity types (e.g., CHEMICAL, DISEASE)", "CHEMICAL, DISEASE")
     allowed_rel_input = st.text_input("Enter allowed relationships (e.g., CHEMICAL-DISEASE)")
+    
     if st.button("Process and Generate Graph for Download"):
         entity_types = [et.strip() for et in entity_types_input.split(",")]
         allowed_relationships = [tuple(rel.strip().split("-")) for rel in allowed_rel_input.split(",") if "-" in rel]
@@ -161,18 +167,25 @@ if 'df' in locals():
         kg_df, entity_to_titles = process_abstracts_from_excel(df, entity_types, allowed_relationships)
         st.write(f"Processed {len(kg_df)} relationships for visualization.")
         
-        # Generate HTML graph and provide download button
+        # Generate HTML graph and save to session state
         html_path = visualize_graph_interactive(kg_df, entity_to_titles)
-        with open(html_path, "r") as file:
-            html_content = file.read()
-            st.download_button(
-                label="Download HTML Visualization",
-                data=html_content,
-                file_name="entity_relationship_graph.html",
-                mime="text/html"
-            )
-        
-        # Optional cleanup
-        if os.path.exists(html_path):
+        st.session_state["html_path"] = html_path
+
+# Provide download button for HTML if generated
+if st.session_state["html_path"]:
+    with open(st.session_state["html_path"], "r") as file:
+        html_content = file.read()
+        st.download_button(
+            label="Download HTML Visualization",
+            data=html_content,
+            file_name="entity_relationship_graph.html",
+            mime="text/html"
+        )
+    
+    # Optional cleanup after download
+    if os.path.exists(st.session_state["html_path"]):
+        os.remove(st.session_state["html_path"])
+        st.session_state["html_path"] = None
+
             os.remove(html_path)
 
