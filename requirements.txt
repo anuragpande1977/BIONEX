@@ -1,7 +1,10 @@
-pandas
-spacy
-gdown
-pyvis
 streamlit
-openpyxl  # for reading Excel files
+pandas
+biopython
+gdown
+openpyxl
+spacy
+pyvis
+plotly
+matplotlib
 
