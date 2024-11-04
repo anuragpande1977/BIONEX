@@ -137,9 +137,9 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     
     # Configure physics for a less elastic and more stable layout
     net.force_atlas_2based(
-        gravity=-50,           # Reduce gravity to prevent nodes from clustering too closely
-        central_gravity=0.001,  # Low central gravity to avoid nodes pulling to the center
-        spring_length=200,      # Increase spring length to spread nodes further apart
+        gravity=-60,           # Reduce gravity to prevent nodes from clustering too closely
+        central_gravity=0.002,  # Low central gravity to avoid nodes pulling to the center
+        spring_length=100,      # Increase spring length to spread nodes further apart
         spring_strength=0.01,   # Lower spring strength for softer "elastic" effect
         damping=0.6             # Set damping to moderate to slow down movements
     )
