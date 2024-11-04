@@ -115,15 +115,18 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
     
+    # Save graph and provide download option
     net.save_graph("graph.html")
     with open("graph.html", "r") as file:
-        st.download_button(
-            label="Download HTML Visualization",
-            data=file,
-            file_name="entity_relationship_graph.html",
-            mime="text/html"
-        )
-    st.components.v1.html(file.read(), height=800)
+        html_content = file.read()
+    st.download_button(
+        label="Download HTML Visualization",
+        data=html_content,
+        file_name="entity_relationship_graph.html",
+        mime="text/html"
+    )
+    # Display the graph inline
+    st.components.v1.html(html_content, height=800)
 
 # Streamlit Interface
 st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
@@ -163,6 +166,3 @@ if 'df' in locals():
         kg_df, entity_to_titles = process_abstracts_from_excel(df, entity_types, allowed_relationships)
         st.write(f"Processed {len(kg_df)} relationships for visualization.")
         visualize_graph_interactive(kg_df, entity_to_titles)
-
-
-
