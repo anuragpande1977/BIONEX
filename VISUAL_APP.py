@@ -1,41 +1,116 @@
+import os
 import pandas as pd
-import spacy
+import streamlit as st
+from Bio import Entrez, Medline
+from io import BytesIO
 import itertools
 from pyvis.network import Network
-import os
 import gdown
 import zipfile
-import streamlit as st
+import spacy
+import plotly.graph_objs as go
 
-# Function to download and load the SpaCy model from Google Drive
+# Initialize PubMed Email
+Entrez.email = st.text_input("Enter your email (for PubMed access):")
+
+# Set up PubMed article types
+article_types = {
+    "Clinical Trials": "Clinical Trial[pt]",
+    "Meta-Analysis": "Meta-Analysis[pt]",
+    "Randomized Controlled Trials": "Randomized Controlled Trial[pt]",
+    "Reviews": "Review[pt]",
+    "Systematic Reviews": "Systematic Review[pt]"
+}
+
+# Helper functions
+def construct_query(search_term, mesh_term, choice):
+    chosen_article_type = article_types[choice]
+    query = f"({search_term}) AND {chosen_article_type}"
+    if mesh_term:
+        query += f" AND {mesh_term}[MeSH Terms]"
+    return query
+
+def fetch_abstracts(query, num_articles):
+    try:
+        handle = Entrez.esearch(db="pubmed", term=query, retmax=num_articles)
+        result = Entrez.read(handle)
+        handle.close()
+
+        ids = result['IdList']
+        if not ids:
+            return []
+
+        handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+        records = Medline.parse(handle)
+        articles = list(records)
+        handle.close()
+        return articles
+    except Exception as e:
+        st.write(f"Error fetching articles: {e}")
+        return []
+
+def save_to_excel(articles):
+    output = BytesIO()
+    data = [{
+        'Title': article.get('TI', 'No title'),
+        'Authors': ', '.join(article.get('AU', 'No authors')),
+        'Abstract': article.get('AB', 'No abstract'),
+        'Publication Date': article.get('DP', 'No date'),
+        'Journal': article.get('TA', 'No journal')
+    } for article in articles]
+
+    df = pd.DataFrame(data)
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    output.seek(0)
+    return output
+
+# PubMed UI
+st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
+search_term = st.text_input("Enter search term:")
+mesh_term = st.text_input("Optional MeSH term:")
+article_choice = st.selectbox("Select article type:", list(article_types.keys()))
+num_articles = st.number_input("Number of articles:", min_value=1, max_value=100, value=10)
+
+if st.button("Fetch PubMed Articles"):
+    if Entrez.email and search_term:
+        query = construct_query(search_term, mesh_term, article_choice)
+        articles = fetch_abstracts(query, num_articles)
+        
+        if articles:
+            excel_data = save_to_excel(articles)
+            st.download_button(
+                label="Download PubMed Articles",
+                data=excel_data,
+                file_name="pubmed_articles.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.write("No articles found.")
+
+# Biomedical Entity Visualizer
+st.write("### Upload Excel for Biomedical Entity Visualization")
+uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+
 @st.cache_resource
 def download_and_load_model():
-    # Define paths for the nested directory structure
     base_dir = "/tmp/model/en_ner_bc5cdr_md"
     nested_model_dir = "/tmp/model/en_ner_bc5cdr_md/en_ner_bc5cdr_md-0.4.0"
     zip_path = "/tmp/model/en_ner_bc5cdr_md.zip"
     config_path = os.path.join(nested_model_dir, "config.cfg")
-    
-    # Direct download link to the model ZIP file on Google Drive
     download_url = "https://drive.google.com/uc?id=1kjTjVdmtLJSu7BFWMn2HMiB7eTSdmqhy"
 
-    # Download the zip file if the nested model directory does not exist
     if not os.path.exists(nested_model_dir) or not os.path.exists(config_path):
         os.makedirs(base_dir, exist_ok=True)
         gdown.download(download_url, zip_path, quiet=False)
-        
-        # Unzip the downloaded model folder
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall("/tmp/model")
-        
-        # Check if config.cfg exists in the nested folder after extraction
         if not os.path.exists(config_path):
-            raise FileNotFoundError("Model extraction failed: 'config.cfg' not found in the nested model directory.")
-    
-    # Load the model from the nested directory
+            raise FileNotFoundError("Model extraction failed.")
+
     return spacy.load(nested_model_dir)
 
-# Initialize the SpaCy model
+# Load model and process entities
 try:
     nlp = download_and_load_model()
 except Exception as e:
@@ -43,70 +118,44 @@ except Exception as e:
     st.stop()
 
 def get_bc5cdr_entities(sent, entity_types):
-    """
-    Extracts specified types of entities using the BC5CDR model and normalizes them to lowercase.
-    """
     doc = nlp(sent)
-    entities = [(ent.text.lower(), ent.label_) for ent in doc.ents if ent.label_ in entity_types]
-    return entities
+    return [(ent.text.lower(), ent.label_) for ent in doc.ents if ent.label_ in entity_types]
 
-def process_abstracts_from_excel(excel_path, entity_types, allowed_relationships):
-    """
-    Processes each abstract to identify specified entities, their relationships, and associated paper titles,
-    filtering by allowed relationships.
-    """
-    df = pd.read_excel(excel_path)
+def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     rows = []
-    entity_to_titles = {}  # Dictionary to map entities to their associated paper titles
-    
+    entity_to_titles = {}
     for _, row in df[['Abstract', 'Title']].dropna().iterrows():
-        abstract, title = row['Abstract'], row['Title']
-        entities = get_bc5cdr_entities(abstract, entity_types)
+        entities = get_bc5cdr_entities(row['Abstract'], entity_types)
         for entity in entities:
-            entity_to_titles.setdefault(entity[0], set()).add(title)
+            entity_to_titles.setdefault(entity[0], set()).add(row['Title'])
         for entity1, entity2 in itertools.combinations(entities, 2):
             if (entity1[1], entity2[1]) in allowed_relationships or (entity2[1], entity1[1]) in allowed_relationships:
                 rows.append({'source': entity1[0], 'target': entity2[0], 'edge': f"{entity1[1]}_to_{entity2[1]}"})
-    
     return pd.DataFrame(rows), entity_to_titles
 
-def visualize_graph_interactive(kg_df, entity_to_titles, output_file):
-    """
-    Visualizes the graph of entities, their relationships, and associated paper titles interactively using Pyvis,
-    with specified colors for each entity type.
-    """
-    net = Network(notebook=False, height="100%", width="100%", bgcolor="#222222", font_color="white")
+def visualize_graph_interactive(kg_df, entity_to_titles):
+    net = Network(height="800px", width="100%", bgcolor="#222222", font_color="white")
     net.force_atlas_2based()
-    
-    entity_colors = {'DISEASE': '#f68b24', 'GENE': '#4caf50', 'CHEMICAL': '#ffffff', 'PROTEIN': '#f44336'}
+    entity_colors = {'DISEASE': '#f68b24', 'CHEMICAL': '#ffffff'}
     
     for _, row in kg_df.iterrows():
-        source_title = "<br>".join(entity_to_titles[row['source']])
-        target_title = "<br>".join(entity_to_titles[row['target']])
-        # Determine the color based on entity type
-        source_color = entity_colors.get(row['edge'].split('_to_')[0], "#999999")  # Default color if not found
-        target_color = entity_colors.get(row['edge'].split('_to_')[1], "#999999")  # Default color if not found
-        net.add_node(row['source'], title=source_title, color=source_color)
-        net.add_node(row['target'], title=target_title, color=target_color)
+        source_color = entity_colors.get(row['source'].split('_')[0], "#999999")
+        net.add_node(row['source'], color=source_color)
         net.add_edge(row['source'], row['target'], title=row['edge'])
     
-    net.write_html(output_file)
+    net.show("graph.html")
+    st.components.v1.html(open("graph.html", "r").read(), height=800)
 
-if __name__ == "__main__":
-    excel_path = input("Enter the path to the Excel file containing abstracts: ")
-    print("Enter the entity types for which you want to extract relationships (e.g., CHEMICAL, DISEASE):")
-    entity_types = input("Entity types (separated by comma): ").strip().split(", ")
-    
-    print("Enter allowed relationships (e.g., CHEMICAL-DISEASE, DISEASE-GENE):")
-    allowed_rel_input = input("Allowed relationships (separated by comma): ").strip().split(", ")
-    allowed_relationships = [tuple(pair.split("-")) for pair in allowed_rel_input]
-    
-    kg_df, entity_to_titles = process_abstracts_from_excel(excel_path, entity_types, allowed_relationships)
-    
-    print(f"Processed {len(kg_df)} relationships for visualization.")
-    
-    output_file = input("Enter the full path and file name for the output HTML file (e.g., /path/to/output.html): ")
-    visualize_graph_interactive(kg_df, entity_to_titles, output_file)
+if uploaded_file:
+    df = pd.read_excel(uploaded_file)
+    entity_types_input = st.text_input("Enter entity types (e.g., CHEMICAL, DISEASE)", "CHEMICAL, DISEASE")
+    allowed_rel_input = st.text_input("Allowed relationships (e.g., CHEMICAL-DISEASE)")
+
+    if st.button("Process and Visualize"):
+        entity_types = [et.strip() for et in entity_types_input.split(",")]
+        allowed_relationships = [tuple(rel.strip().split("-")) for rel in allowed_rel_input.split(",") if "-" in rel]
+        kg_df, entity_to_titles = process_abstracts_from_excel(df, entity_types, allowed_relationships)
+        visualize_graph_interactive(kg_df, entity_to_titles)
 
 
 
