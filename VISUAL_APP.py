@@ -8,7 +8,6 @@ from io import BytesIO
 import streamlit as st
 import gdown
 import zipfile
-from bs4 import BeautifulSoup
 
 # Download and load the SpaCy model from Google Drive
 @st.cache_resource
@@ -104,6 +103,7 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
+    # Initialize Pyvis network graph
     net = Network(height="500px", width="100%", bgcolor="#222222", font_color="white")
     
     # Add nodes with titles
@@ -116,23 +116,9 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
     
-    # Save graph to HTML file
+    # Save the graph directly without additional processing
     html_path = "graph_download.html"
     net.save_graph(html_path)
-    
-    # Clean up the HTML to remove extraneous content
-    with open(html_path, "r") as file:
-        html_content = file.read()
-    soup = BeautifulSoup(html_content, "html.parser")
-    
-    # Only keep the actual graph div, if possible
-    graph_div = soup.find("div", {"id": "mynetwork"})
-    clean_html = str(graph_div) if graph_div else html_content
-    
-    # Overwrite the HTML file with cleaned content
-    with open(html_path, "w") as file:
-        file.write(clean_html)
-
     return html_path
 
 # Streamlit UI
@@ -203,4 +189,5 @@ if st.session_state["html_path"]:
     if os.path.exists(st.session_state["html_path"]):
         os.remove(st.session_state["html_path"])
         st.session_state["html_path"] = None
+
 
