@@ -11,20 +11,20 @@ import streamlit as st
 @st.cache_resource
 def download_and_load_model():
     # Define paths
-    model_dir = "/app/model/en_ner_bc5cdr_md"
-    zip_path = "/app/model/en_ner_bc5cdr_md.zip"
+    model_dir = "/tmp/model/en_ner_bc5cdr_md"
+    zip_path = "/tmp/model/en_ner_bc5cdr_md.zip"
     
     # Direct download link to the model ZIP file on Google Drive
     download_url = "https://drive.google.com/uc?id=1kjTjVdmtLJSu7BFWMn2HMiB7eTSdmqhy"
 
     # Download the zip file if the model folder does not exist
     if not os.path.exists(model_dir):
-        os.makedirs("/app/model", exist_ok=True)
+        os.makedirs("/tmp/model", exist_ok=True)
         gdown.download(download_url, zip_path, quiet=False)
         
         # Unzip the downloaded model folder
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall("/app/model")
+            zip_ref.extractall("/tmp/model")
     
     # Load the model
     return spacy.load(model_dir)
@@ -97,4 +97,5 @@ if __name__ == "__main__":
     
     output_file = input("Enter the full path and file name for the output HTML file (e.g., /path/to/output.html): ")
     visualize_graph_interactive(kg_df, entity_to_titles, output_file)
+
 
