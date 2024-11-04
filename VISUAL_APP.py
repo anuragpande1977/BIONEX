@@ -104,12 +104,21 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
     # Initialize Pyvis network graph with full page dimensions
-    net = Network(height="100vh", width="100vw", bgcolor="#222222", font_color="white")  # 'vh' and 'vw' for full viewport height and width
+    net = Network(height="100vh", width="100vw", bgcolor="#222222", font_color="white")
     
-    # Add nodes with titles
+    # Define colors for entity types
+    entity_colors = {
+        "CHEMICAL": "green",
+        "DISEASE": "red"
+    }
+    
+    # Add nodes with specified colors based on entity type
     for entity, titles in entity_to_titles.items():
+        # Extract entity type and assign color
+        entity_type = entity.split('_')[0].upper()
+        color = entity_colors.get(entity_type, "#999999")  # Default color if type is unknown
         title = "<br>".join(titles)
-        net.add_node(entity, title=title)
+        net.add_node(entity, title=title, color=color)
     
     # Add edges
     for _, row in kg_df.iterrows():
@@ -148,6 +157,7 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         file.write(html_content)
     
     return html_path
+
 
 
 # Streamlit UI
