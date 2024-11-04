@@ -129,6 +129,10 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         
         # Add node with determined color
         net.add_node(entity, title=title, color=color)
+
+    # Set node size (e.g., 20 is a moderate increase; adjust as needed)
+        node_size = 20
+
     
     # Add edges
     for _, row in kg_df.iterrows():
