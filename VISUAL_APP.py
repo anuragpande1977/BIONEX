@@ -10,27 +10,37 @@ import streamlit as st
 # Function to download and load the SpaCy model from Google Drive
 @st.cache_resource
 def download_and_load_model():
-    # Define paths
-    model_dir = "/tmp/model/en_ner_bc5cdr_md"
+    # Define paths for the nested directory structure
+    base_dir = "/tmp/model/en_ner_bc5cdr_md"
+    nested_model_dir = "/tmp/model/en_ner_bc5cdr_md/en_ner_bc5cdr_md-0.4.0"
     zip_path = "/tmp/model/en_ner_bc5cdr_md.zip"
+    config_path = os.path.join(nested_model_dir, "config.cfg")
     
     # Direct download link to the model ZIP file on Google Drive
     download_url = "https://drive.google.com/uc?id=1kjTjVdmtLJSu7BFWMn2HMiB7eTSdmqhy"
 
-    # Download the zip file if the model folder does not exist
-    if not os.path.exists(model_dir):
-        os.makedirs("/tmp/model", exist_ok=True)
+    # Download the zip file if the nested model directory does not exist
+    if not os.path.exists(nested_model_dir) or not os.path.exists(config_path):
+        os.makedirs(base_dir, exist_ok=True)
         gdown.download(download_url, zip_path, quiet=False)
         
         # Unzip the downloaded model folder
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall("/tmp/model")
+        
+        # Check if config.cfg exists in the nested folder after extraction
+        if not os.path.exists(config_path):
+            raise FileNotFoundError("Model extraction failed: 'config.cfg' not found in the nested model directory.")
     
-    # Load the model
-    return spacy.load(model_dir)
+    # Load the model from the nested directory
+    return spacy.load(nested_model_dir)
 
 # Initialize the SpaCy model
-nlp = download_and_load_model()
+try:
+    nlp = download_and_load_model()
+except Exception as e:
+    st.error(f"Failed to load model: {e}")
+    st.stop()
 
 def get_bc5cdr_entities(sent, entity_types):
     """
@@ -97,5 +107,6 @@ if __name__ == "__main__":
     
     output_file = input("Enter the full path and file name for the output HTML file (e.g., /path/to/output.html): ")
     visualize_graph_interactive(kg_df, entity_to_titles, output_file)
+
 
 
