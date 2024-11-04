@@ -95,11 +95,20 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     entity_to_titles = {}
     for _, row in df[['Abstract', 'Title']].dropna().iterrows():
         entities = get_bc5cdr_entities(row['Abstract'], entity_types)
-        for entity in entities:
-            entity_to_titles.setdefault(entity[0], set()).add(row['Title'])
+        for entity_text, entity_type in entities:
+            # Store each entity with its type and associated titles
+            if entity_text not in entity_to_titles:
+                entity_to_titles[entity_text] = {"titles": set(), "type": entity_type}
+            entity_to_titles[entity_text]["titles"].add(row['Title'])
+        
+        # Generate relationships based on allowed types
         for entity1, entity2 in itertools.combinations(entities, 2):
             if (entity1[1], entity2[1]) in allowed_relationships or (entity2[1], entity1[1]) in allowed_relationships:
-                rows.append({'source': entity1[0], 'target': entity2[0], 'edge': f"{entity1[1]}_to_{entity2[1]}"})
+                rows.append({
+                    'source': entity1[0], 'target': entity2[0], 
+                    'edge': f"{entity1[1]}_to_{entity2[1]}"
+                })
+    
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
@@ -112,16 +121,11 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         "DISEASE": "red"
     }
     
-    # Add nodes with specified colors based on entity type
-    for entity, titles in entity_to_titles.items():
-        # Extract the entity type and apply color if it matches "CHEMICAL" or "DISEASE"
-        entity_type = entity.split('_')[-1].upper()  # Assuming entity format might be like "example_CHEMICAL"
-        
-        # Debugging output to verify entity type detection
-        st.write(f"Entity: {entity}, Type detected: {entity_type}")
-        
-        color = entity_colors.get(entity_type, "#999999")  # Default to grey if type is unknown
-        title = "<br>".join(titles)
+    # Add nodes with specified colors based on stored entity type
+    for entity, details in entity_to_titles.items():
+        entity_type = details["type"]
+        color = entity_colors.get(entity_type.upper(), "#999999")  # Default to grey if type is unknown
+        title = "<br>".join(details["titles"])
         
         # Add node with determined color
         net.add_node(entity, title=title, color=color)
@@ -163,7 +167,6 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         file.write(html_content)
     
     return html_path
-
 
 
 
