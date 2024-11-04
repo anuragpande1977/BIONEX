@@ -114,10 +114,16 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     
     # Add nodes with specified colors based on entity type
     for entity, titles in entity_to_titles.items():
-        # Extract entity type and assign color
-        entity_type = entity.split('_')[0].upper()
-        color = entity_colors.get(entity_type, "#999999")  # Default color if type is unknown
+        # Extract the entity type and apply color if it matches "CHEMICAL" or "DISEASE"
+        entity_type = entity.split('_')[-1].upper()  # Assuming entity format might be like "example_CHEMICAL"
+        
+        # Debugging output to verify entity type detection
+        st.write(f"Entity: {entity}, Type detected: {entity_type}")
+        
+        color = entity_colors.get(entity_type, "#999999")  # Default to grey if type is unknown
         title = "<br>".join(titles)
+        
+        # Add node with determined color
         net.add_node(entity, title=title, color=color)
     
     # Add edges
@@ -157,6 +163,7 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         file.write(html_content)
     
     return html_path
+
 
 
 
