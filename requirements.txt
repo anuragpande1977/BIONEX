@@ -1,14 +1,4 @@
-streamlit
-pandas
-biopython
-gdown
-openpyxl
-spacy
-pyvis
-plotly
-matplotlib
-
-spacy==3.0.1  # Match the model's spaCy version
+spacy==3.0.1
 pyvis
 gdown
 biopython
