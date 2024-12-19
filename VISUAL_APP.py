@@ -9,37 +9,6 @@ import streamlit as st
 import gdown
 import zipfile
 import streamlit as st
-import streamlit.components.v1 as components
-
-
-# Function to inject Google Analytics script
-def inject_google_analytics():
-    GA_TRACKING_ID = "G-JR76W8BFHL"  # Your Google Analytics Tracking ID
-    analytics_script = f"""
-    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-      gtag('config', '{GA_TRACKING_ID}');
-    </script>
-    """
-    st.markdown(
-        f"""
-        <head>
-            {analytics_script}
-        </head>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# Inject Google Analytics script
-inject_google_analytics()
-
-# Streamlit app content
-st.title("My Streamlit App with Google Analytics")
-st.write("This app is now integrated with Google Analytics!")
-
 
 def download_and_load_model():
     base_dir = "/tmp/model/en_ner_bc5cdr_md"
