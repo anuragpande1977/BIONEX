@@ -11,33 +11,25 @@ import zipfile
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Google Tag Manager Script
-gtm_script = """
+
+# Google Analytics Tracking Script
+GA_TRACKING_ID = "G-JR76W8BFHL"  # Your Google Analytics Tracking ID
+
+# HTML Code for Google Analytics
+google_analytics_script = f"""
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-JR76W8BFHL"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
+  function gtag(){{dataLayer.push(arguments);}}
   gtag('js', new Date());
-
-  gtag('config', 'G-JR76W8BFHL');
+  gtag('config', '{GA_TRACKING_ID}');
 </script>
 """
 
-# Inject the GTM script into the app
-components.html(
-    f"""
-    <html>
-    <head>
-    {gtm_script}
-    </head>
-    </html>
-    """,
-    height=0,  # Keeps the added HTML invisible
-)
+# Inject the script into the Streamlit app
+components.html(google_analytics_script, height=0)
 
-# Download and load the SpaCy model from Google Drive
-@st.cache_resource
 def download_and_load_model():
     base_dir = "/tmp/model/en_ner_bc5cdr_md"
     nested_model_dir = "/tmp/model/en_ner_bc5cdr_md/en_ner_bc5cdr_md-0.4.0"
