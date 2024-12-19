@@ -10,6 +10,43 @@ import gdown
 import zipfile
 import streamlit as st
 import streamlit as st
+import streamlit.components.v1 as components
+
+# Function to inject the GTM <head> script
+def inject_gtm_head():
+    gtm_head_script = """
+    <!-- Google Tag Manager -->
+    <script>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-PZKDTSN8');
+    </script>
+    <!-- End Google Tag Manager -->
+    """
+    st.markdown(f"<head>{gtm_head_script}</head>", unsafe_allow_html=True)
+
+# Function to inject the GTM <body> script
+def inject_gtm_body():
+    gtm_body_script = """
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZKDTSN8"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    """
+    components.html(gtm_body_script, height=0)
+
+# Inject both GTM scripts
+inject_gtm_head()
+inject_gtm_body()
+
+# Streamlit app content
+st.title("BIONEXT FOR BIOMEDICAL DATAMINING")
+st.write("Welcome to BIONEXT, your go-to platform for biomedical data mining!")
+
 
 
 
