@@ -9,6 +9,30 @@ import streamlit as st
 import gdown
 import zipfile
 import streamlit as st
+import streamlit as st
+
+# Function to inject Google Analytics script
+def inject_google_analytics():
+    GA_TRACKING_ID = "G-JR76W8BFHL"  # Replace with your Google Analytics Tracking ID
+    analytics_script = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{GA_TRACKING_ID}');
+    </script>
+    """
+    # Injecting the script into the app
+    st.markdown(f"<head>{analytics_script}</head>", unsafe_allow_html=True)
+
+# Call the function to inject Google Analytics
+inject_google_analytics()
+
+# Streamlit app content
+st.title("BIONEXT FOR BIOMEDICAL DATAMINING")
+st.write("Welcome to BIONEXT, SABINSA platform for biomedical data mining!")
 
 def download_and_load_model():
     base_dir = "/tmp/model/en_ner_bc5cdr_md"
@@ -30,7 +54,7 @@ def download_and_load_model():
 # Initialize SpaCy model
 try:
     nlp = download_and_load_model()
-    st.write("SpaCy model loaded successfully.")
+    st.write("BIOMEDICAL models loaded successfully.")
 except Exception as e:
     st.error(f"Failed to load model: {e}")
     st.stop()
