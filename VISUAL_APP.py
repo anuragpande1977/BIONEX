@@ -9,6 +9,29 @@ import streamlit as st
 import gdown
 import zipfile
 import streamlit as st
+import streamlit.components.v1 as components
+
+# Inject Google Analytics
+def inject_google_analytics():
+    GA_TRACKING_ID = "G-JR76W8BFHL"  # Replace with your Google Analytics Tracking ID
+    analytics_script = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{GA_TRACKING_ID}');
+    </script>
+    """
+    components.html(analytics_script, height=0)  # Inject the script into the app
+
+# Call the function to inject Google Analytics
+inject_google_analytics()
+
+# Streamlit app content
+st.title("BIONEXT FOR BIOMEDICAL DATAMINING")
+st.write("Welcome to BIONEXT, your go-to platform for biomedical data mining!")
 
 
 def download_and_load_model():
