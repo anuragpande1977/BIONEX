@@ -1,9 +1,9 @@
 spacy==3.0.1
+thinc==8.0.1
 pyvis
 gdown
 biopython
 openpyxl
 pandas
 streamlit
-
 
