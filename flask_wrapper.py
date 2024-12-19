@@ -28,7 +28,7 @@ def index():
     """
 
     # Streamlit app URL (update with your Streamlit app's public URL)
-    streamlit_app_url = "https://your-app.streamlit.app"  # Replace with your Streamlit app URL
+    streamlit_app_url = "https://bionex.streamlit.app"  # Replace with your Streamlit app URL
 
     # HTML template with GTM and embedded Streamlit app
     return render_template_string(f"""
