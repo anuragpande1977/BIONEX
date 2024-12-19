@@ -10,30 +10,6 @@ import gdown
 import zipfile
 import streamlit as st
 
-import streamlit.components.v1 as components
-
-# Function to inject GTM script into the app
-def inject_gtm():
-    gtm_script = """
-    <!-- Google Tag Manager -->
-    <script>
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id=GTM-PZKDTSN8';f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','GTM-PZKDTSN8');
-    </script>
-    <!-- End Google Tag Manager -->
-    """
-    # Inject the script into the app
-    components.html(gtm_script, height=0)
-
-# Inject GTM
-inject_gtm()
-
-# Main app content
-st.title("BIONEXT FOR BIOMEDICAL DATAMINING")
-st.write("Welcome to BIONEXT, your go-to platform for biomedical data mining!")
 
 
 def download_and_load_model():
