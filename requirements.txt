@@ -8,4 +8,12 @@ pyvis
 plotly
 matplotlib
 
+spacy==3.0.1  # Match the model's spaCy version
+pyvis
+gdown
+biopython
+openpyxl
+pandas
+streamlit
+
 
