@@ -7,4 +7,5 @@ spacy
 pyvis
 plotly
 matplotlib
+flask
 
