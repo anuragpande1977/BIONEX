@@ -44,5 +44,9 @@ def index():
     </html>
     """)
 
+import os
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))  # Get the port from the environment or use 5000 as default
+    app.run(debug=True, host="0.0.0.0", port=port)
+
