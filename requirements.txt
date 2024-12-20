@@ -1,7 +1,8 @@
 streamlit
-spacy
+
 pyvis
 biopython
 pandas
 openpyxl
 gdown
+spacy==3.0.1
