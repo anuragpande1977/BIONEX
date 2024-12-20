@@ -10,6 +10,7 @@ import gdown
 import zipfile
 import streamlit as st
 
+st.set_option('server.headless', True)
 
 
 def download_and_load_model():
