@@ -1,6 +1,7 @@
 spacy==3.8.3 --only-binary=:all:
 thinc==8.3.3 --only-binary=:all:
-streamlit==1.24.0
+Downgraded Streamlit to 1.24.0 for Pillow compatibility
+
 pyvis==0.3.2
 biopython==1.81
 pandas==2.2.3
