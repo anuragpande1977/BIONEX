@@ -11,6 +11,11 @@ import zipfile
 import streamlit as st
 import subprocess
 import streamlit as st
+import subprocess
+import streamlit as st
+
+st.write("Installed packages:")
+st.write(subprocess.run(["pip", "freeze"], capture_output=True, text=True).stdout)
 
 # Debugging Info
 st.write("Python version:", os.sys.version)
