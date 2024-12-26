@@ -1,7 +1,7 @@
 spacy==3.8.3 --only-binary=:all:
 thinc==8.3.3 --only-binary=:all:
 streamlit==1.25.0
-pyvis==0.3.1
+pyvis==0.3.2
 biopython==1.81
 pandas==1.5.3
 openpyxl==3.0.10
