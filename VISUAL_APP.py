@@ -178,7 +178,18 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
             connectedNodes.push(selectedNode);
 
             network.body.data.nodes.forEach(function(node) {
-                node.hidden = !connectedNodes.includes(node.id);
+               if (connectedNodes.includes(node.id)) {
+    node.hidden = false;
+    node.color = undefined;  // Use default color
+    node.opacity = 1.0;
+    node.font = { color: 'white' };
+} else {
+    node.hidden = false;
+    node.color = 'rgba(150,150,150,0.2)';
+    node.opacity = 0.2;
+    node.font = { color: '#666666' };
+}
+
             });
 
             network.body.data.edges.forEach(function(edge) {
