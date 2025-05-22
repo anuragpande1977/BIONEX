@@ -184,56 +184,25 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         html_content = file.read()
 
     # Inject JavaScript for click-based filtering
-    custom_js = """
-<script type="text/javascript">
-function highlightConnectedNodes(params) {
-    if (params.nodes.length > 0) {
-        var selectedNode = params.nodes[0];
-        var connectedNodes = network.getConnectedNodes(selectedNode);
-        connectedNodes.push(selectedNode);  // include selected node itself
+    article_choice = st.selectbox(
+    "Select article type:",
+    [
+        "All Articles",
+        "Clinical Trial",
+        "Meta-Analysis",
+        "Randomized Controlled Trial",
+        "Review",
+        "Case Reports",
+        "Comparative Study",
+        "Observational Study",
+        "Controlled Clinical Trial",
+        "Evaluation Study",
+        "Multicenter Study",
+        "Practice Guideline",
+        "Validation Study"
+    ]
+)
 
-        network.body.data.nodes.forEach(function(node) {
-            if (node.id === selectedNode) {
-                // Highlight the selected node
-                node.hidden = false;
-                node.color = '#ffffff'; // bright white
-                node.font = { color: 'white', size: 18, bold: true };
-            } else if (connectedNodes.includes(node.id)) {
-                // Highlight direct neighbors
-                node.hidden = false;
-                node.color = '#66ff66'; // bright green
-                node.font = { color: 'white', size: 14 };
-            } else {
-                // Fade other nodes
-                node.hidden = false;
-                node.color = 'rgba(180,180,180,0.1)';
-                node.font = { color: '#888888', size: 10 };
-            }
-        });
-
-        network.body.data.edges.forEach(function(edge) {
-            let isDirect = (
-                (edge.from === selectedNode && connectedNodes.includes(edge.to)) ||
-                (edge.to === selectedNode && connectedNodes.includes(edge.from))
-            );
-            if (isDirect) {
-                edge.hidden = false;
-                edge.color = { color: '#ffffff' };  // white
-                edge.width = 3;
-            } else {
-                edge.hidden = false;
-                edge.color = { color: 'rgba(180,180,180,0.1)' };
-                edge.width = 0.2;
-            }
-        });
-
-        network.redraw();
-    }
-}
-network.on("click", highlightConnectedNodes);
-</script>
-
-    """
 
     html_content = html_content.replace("</body>", custom_js + "\n</body>")
 
