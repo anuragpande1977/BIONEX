@@ -177,12 +177,17 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
             var connectedNodes = network.getConnectedNodes(selectedNode);
             connectedNodes.push(selectedNode);
 
-            network.body.data.nodes.forEach(function(node) {
-               if (connectedNodes.includes(node.id)) {
-    node.hidden = false;
-    node.color = undefined;  // Use default color
-    node.opacity = 1.0;
-    node.font = { color: 'white' };
+           network.body.data.nodes.forEach(function(node) {
+            if (node.id === selectedNode) {
+                // Highlight the selected node
+                node.hidden = false;
+                node.color = '#ffffff'; // bright white
+                node.font = { color: 'white', size: 18, bold: true };
+            } else if (connectedNodes.includes(node.id)) {
+                // Highlight direct neighbors
+                node.hidden = false;
+                node.color = '#66ff66'; // bright green
+                node.font = { color: 'white', size: 14 };
 } else {
     node.hidden = false;
     node.color = 'rgba(150,150,150,0.2)';
