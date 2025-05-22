@@ -173,6 +173,52 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     # Save the graph to HTML with full page width and height
     html_path = "graph_download.html"
     net.save_graph(html_path)
+with open(html_path, "r") as file:
+    html_content = file.read()
+
+# Add custom JavaScript to filter nodes on click
+custom_js = """
+<script type="text/javascript">
+function highlightConnectedNodes(params) {
+    if (params.nodes.length > 0) {
+        var selectedNode = params.nodes[0];
+        var connectedNodes = network.getConnectedNodes(selectedNode);
+        connectedNodes.push(selectedNode); // include the clicked node
+
+        // Set all nodes initially to hidden
+        network.body.data.nodes.forEach(function(node) {
+            if (!connectedNodes.includes(node.id)) {
+                node.hidden = true;
+            } else {
+                node.hidden = false;
+            }
+        });
+
+        // Hide edges not connected to the selected node
+        network.body.data.edges.forEach(function(edge) {
+            if (
+                connectedNodes.includes(edge.from) &&
+                connectedNodes.includes(edge.to)
+            ) {
+                edge.hidden = false;
+            } else {
+                edge.hidden = true;
+            }
+        });
+
+        network.redraw();
+    }
+}
+
+network.on("click", highlightConnectedNodes);
+</script>
+"""
+
+# Inject the script before </body>
+html_content = html_content.replace("</body>", custom_js + "\n</body>")
+
+with open(html_path, "w") as file:
+    file.write(html_content)
 
     # Override CSS styling for full-screen display in HTML content
     with open(html_path, "r") as file:
