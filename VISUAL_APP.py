@@ -61,17 +61,24 @@ def download_and_load_model():
 # PubMed Search Functions
 def construct_query(search_term, mesh_term, choice):
     article_types = {
-        "Clinical Trials": "Clinical Trial[pt]",
+        "Clinical Trial": "Clinical Trial[pt]",
         "Meta-Analysis": "Meta-Analysis[pt]",
-        "Randomized Controlled Trials": "Randomized Controlled Trial[pt]",
-        "Reviews": "Review[pt]"
+        "Randomized Controlled Trial": "Randomized Controlled Trial[pt]",
+        "Review": "Review[pt]",
+        "Case Reports": "Case Reports[pt]",
+        "Comparative Study": "Comparative Study[pt]",
+        "Observational Study": "Observational Study[pt]",
+        "Controlled Clinical Trial": "Controlled Clinical Trial[pt]",
+        "Evaluation Study": "Evaluation Study[pt]",
+        "Multicenter Study": "Multicenter Study[pt]",
+        "Practice Guideline": "Practice Guideline[pt]",
+        "Validation Study": "Validation Study[pt]"
     }
 
     query = f"({search_term})"
 
-    # Only apply article type filter if not "All Articles"
-    if choice != "All Articles":
-        query += f" AND {article_types.get(choice, '')}"
+    if choice != "All Articles" and choice in article_types:
+        query += f" AND {article_types[choice]}"
 
     if mesh_term:
         query += f" AND {mesh_term}[MeSH Terms]"
