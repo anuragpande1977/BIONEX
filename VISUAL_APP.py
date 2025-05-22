@@ -184,24 +184,7 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         html_content = file.read()
 
     # Inject JavaScript for click-based filtering
-    article_choice = st.selectbox(
-    "Select article type:",
-    [
-        "All Articles",
-        "Clinical Trial",
-        "Meta-Analysis",
-        "Randomized Controlled Trial",
-        "Review",
-        "Case Reports",
-        "Comparative Study",
-        "Observational Study",
-        "Controlled Clinical Trial",
-        "Evaluation Study",
-        "Multicenter Study",
-        "Practice Guideline",
-        "Validation Study"
-    ]
-)
+    
 
 
     html_content = html_content.replace("</body>", custom_js + "\n</body>")
