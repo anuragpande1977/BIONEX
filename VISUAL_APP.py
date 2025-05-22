@@ -64,13 +64,19 @@ def construct_query(search_term, mesh_term, choice):
         "Clinical Trials": "Clinical Trial[pt]",
         "Meta-Analysis": "Meta-Analysis[pt]",
         "Randomized Controlled Trials": "Randomized Controlled Trial[pt]",
-        "Reviews": "Review[pt]",
+        "Reviews": "Review[pt]"
     }
-    chosen_article_type = article_types.get(choice, "")
-    query = f"({search_term}) AND {chosen_article_type}"
+
+    query = f"({search_term})"
+    
+    if choice in article_types:
+        query += f" AND {article_types[choice]}"
+
     if mesh_term:
         query += f" AND {mesh_term}[MeSH Terms]"
+
     return query
+
 
 def fetch_abstracts(query, num_articles, email):
     Entrez.email = email
