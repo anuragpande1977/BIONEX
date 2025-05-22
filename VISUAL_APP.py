@@ -134,98 +134,69 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
     return pd.DataFrame(rows), entity_to_titles
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
-    # Initialize Pyvis network graph with full page dimensions
+    from pyvis.network import Network
+
     net = Network(height="100vh", width="100vw", bgcolor="#222222", font_color="white")
-    
-    # Define colors for entity types
+
     entity_colors = {
         "CHEMICAL": "green",
         "DISEASE": "red"
     }
-    
-    # Add nodes with specified colors based on stored entity type
+
     for entity, details in entity_to_titles.items():
         entity_type = details["type"]
-        color = entity_colors.get(entity_type.upper(), "#999999")  # Default to grey if type is unknown
+        color = entity_colors.get(entity_type.upper(), "#999999")
         title = "<br>".join(details["titles"])
-        
-        # Add node with determined color
         net.add_node(entity, title=title, color=color)
 
-    # Set node size (e.g., 20 is a moderate increase; adjust as needed)
-        node_size = 20
-
-    
-    # Add edges
     for _, row in kg_df.iterrows():
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
-    
-    # Configure physics for a less elastic and more stable layout
+
     net.force_atlas_2based(
-        gravity=-60,           # Reduce gravity to prevent nodes from clustering too closely
-        central_gravity=0.002,  # Low central gravity to avoid nodes pulling to the center
-        spring_length=100,      # Increase spring length to spread nodes further apart
-        spring_strength=0.01,   # Lower spring strength for softer "elastic" effect
-        damping=0.6             # Set damping to moderate to slow down movements
+        gravity=-60,
+        central_gravity=0.002,
+        spring_length=100,
+        spring_strength=0.01,
+        damping=0.6
     )
 
-    # Save the graph to HTML with full page width and height
     html_path = "graph_download.html"
     net.save_graph(html_path)
-    
-with open(html_path, "r") as file:
-    html_content = file.read()
 
-# Add custom JavaScript to filter nodes on click
-custom_js = """
-<script type="text/javascript">
-function highlightConnectedNodes(params) {
-    if (params.nodes.length > 0) {
-        var selectedNode = params.nodes[0];
-        var connectedNodes = network.getConnectedNodes(selectedNode);
-        connectedNodes.push(selectedNode); // include the clicked node
-
-        // Set all nodes initially to hidden
-        network.body.data.nodes.forEach(function(node) {
-            if (!connectedNodes.includes(node.id)) {
-                node.hidden = true;
-            } else {
-                node.hidden = false;
-            }
-        });
-
-        // Hide edges not connected to the selected node
-        network.body.data.edges.forEach(function(edge) {
-            if (
-                connectedNodes.includes(edge.from) &&
-                connectedNodes.includes(edge.to)
-            ) {
-                edge.hidden = false;
-            } else {
-                edge.hidden = true;
-            }
-        });
-
-        network.redraw();
-    }
-}
-
-network.on("click", highlightConnectedNodes);
-</script>
-"""
-
-# Inject the script before </body>
-html_content = html_content.replace("</body>", custom_js + "\n</body>")
-
-with open(html_path, "w") as file:
-    file.write(html_content)
-
-    # Override CSS styling for full-screen display in HTML content
+    # Read the saved HTML
     with open(html_path, "r") as file:
         html_content = file.read()
 
-    # Add CSS to make sure it stretches to full page
+    # Inject JavaScript for click-based filtering
+    custom_js = """
+    <script type="text/javascript">
+    function highlightConnectedNodes(params) {
+        if (params.nodes.length > 0) {
+            var selectedNode = params.nodes[0];
+            var connectedNodes = network.getConnectedNodes(selectedNode);
+            connectedNodes.push(selectedNode);
+
+            network.body.data.nodes.forEach(function(node) {
+                node.hidden = !connectedNodes.includes(node.id);
+            });
+
+            network.body.data.edges.forEach(function(edge) {
+                var show = connectedNodes.includes(edge.from) && connectedNodes.includes(edge.to);
+                edge.hidden = !show;
+            });
+
+            network.redraw();
+        }
+    }
+
+    network.on("click", highlightConnectedNodes);
+    </script>
+    """
+
+    html_content = html_content.replace("</body>", custom_js + "\n</body>")
+
+    # Add full-page CSS styling
     full_page_css = """
     <style>
         body, html {
@@ -241,13 +212,12 @@ with open(html_path, "w") as file:
         }
     </style>
     """
-    # Insert the CSS at the beginning of the HTML content
     html_content = html_content.replace("<head>", f"<head>{full_page_css}")
 
-    # Overwrite the HTML file with the modified content
+    # Save modified HTML
     with open(html_path, "w") as file:
         file.write(html_content)
-    
+
     return html_path
 
 
