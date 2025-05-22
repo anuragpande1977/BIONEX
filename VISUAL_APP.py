@@ -150,24 +150,29 @@ def process_abstracts_from_excel(df, entity_types, allowed_relationships):
 
 def visualize_graph_interactive(kg_df, entity_to_titles):
     from pyvis.network import Network
+    import os
 
     net = Network(height="100vh", width="100vw", bgcolor="#222222", font_color="white")
 
+    # Define node colors by type
     entity_colors = {
         "CHEMICAL": "green",
         "DISEASE": "red"
     }
 
+    # Add nodes
     for entity, details in entity_to_titles.items():
         entity_type = details["type"]
         color = entity_colors.get(entity_type.upper(), "#999999")
         title = "<br>".join(details["titles"])
         net.add_node(entity, title=title, color=color)
 
+    # Add edges
     for _, row in kg_df.iterrows():
         if row['source'] in net.get_nodes() and row['target'] in net.get_nodes():
             net.add_edge(row['source'], row['target'], title=row['edge'])
 
+    # Configure physics for layout
     net.force_atlas_2based(
         gravity=-60,
         central_gravity=0.002,
@@ -176,20 +181,70 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
         damping=0.6
     )
 
+    # Save base HTML
     html_path = "graph_download.html"
     net.save_graph(html_path)
 
-    # Read the saved HTML
+    # Read HTML content
     with open(html_path, "r") as file:
         html_content = file.read()
 
-    # Inject JavaScript for click-based filtering
-    
+    # Custom JavaScript for interactive focus
+    custom_js = """
+    <script type="text/javascript">
+    function highlightConnectedNodes(params) {
+        if (params.nodes.length > 0) {
+            var selectedNode = params.nodes[0];
+            var connectedNodes = network.getConnectedNodes(selectedNode);
+            connectedNodes.push(selectedNode);
 
+            network.body.data.nodes.forEach(function(node) {
+                if (node.id === selectedNode) {
+                    node.hidden = false;
+                    node.color = '#ffffff';
+                    node.opacity = 1;
+                    node.font = { color: 'white', size: 20, bold: true };
+                } else if (connectedNodes.includes(node.id)) {
+                    node.hidden = false;
+                    node.color = '#00ff88';
+                    node.opacity = 1;
+                    node.font = { color: 'white', size: 14 };
+                } else {
+                    node.hidden = false;
+                    node.color = '#222222';
+                    node.opacity = 0.2;
+                    node.font = { color: '#444444', size: 8 };
+                }
+            });
 
+            network.body.data.edges.forEach(function(edge) {
+                var isConnected = (
+                    (edge.from === selectedNode && connectedNodes.includes(edge.to)) ||
+                    (edge.to === selectedNode && connectedNodes.includes(edge.from))
+                );
+                if (isConnected) {
+                    edge.hidden = false;
+                    edge.color = { color: '#ffffff' };
+                    edge.width = 3;
+                } else {
+                    edge.hidden = false;
+                    edge.color = { color: '#333333' };
+                    edge.width = 0.3;
+                }
+            });
+
+            network.redraw();
+        }
+    }
+
+    network.on("click", highlightConnectedNodes);
+    </script>
+    """
+
+    # Inject the JavaScript before </body>
     html_content = html_content.replace("</body>", custom_js + "\n</body>")
 
-    # Add full-page CSS styling
+    # Inject CSS to force full-screen layout
     full_page_css = """
     <style>
         body, html {
@@ -207,11 +262,12 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     """
     html_content = html_content.replace("<head>", f"<head>{full_page_css}")
 
-    # Save modified HTML
+    # Write final HTML back to disk
     with open(html_path, "w") as file:
         file.write(html_content)
 
     return html_path
+
 
 
 # Streamlit UI
