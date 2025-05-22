@@ -170,14 +170,14 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
 
     # Inject JavaScript for click-based filtering
     custom_js = """
-    <script type="text/javascript">
-    function highlightConnectedNodes(params) {
-        if (params.nodes.length > 0) {
-            var selectedNode = params.nodes[0];
-            var connectedNodes = network.getConnectedNodes(selectedNode);
-            connectedNodes.push(selectedNode);
+<script type="text/javascript">
+function highlightConnectedNodes(params) {
+    if (params.nodes.length > 0) {
+        var selectedNode = params.nodes[0];
+        var connectedNodes = network.getConnectedNodes(selectedNode);
+        connectedNodes.push(selectedNode);  // include selected node itself
 
-           network.body.data.nodes.forEach(function(node) {
+        network.body.data.nodes.forEach(function(node) {
             if (node.id === selectedNode) {
                 // Highlight the selected node
                 node.hidden = false;
@@ -188,26 +188,36 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
                 node.hidden = false;
                 node.color = '#66ff66'; // bright green
                 node.font = { color: 'white', size: 14 };
-} else {
-    node.hidden = false;
-    node.color = 'rgba(150,150,150,0.2)';
-    node.opacity = 0.2;
-    node.font = { color: '#666666' };
-}
+            } else {
+                // Fade other nodes
+                node.hidden = false;
+                node.color = 'rgba(180,180,180,0.1)';
+                node.font = { color: '#888888', size: 10 };
+            }
+        });
 
-            });
+        network.body.data.edges.forEach(function(edge) {
+            let isDirect = (
+                (edge.from === selectedNode && connectedNodes.includes(edge.to)) ||
+                (edge.to === selectedNode && connectedNodes.includes(edge.from))
+            );
+            if (isDirect) {
+                edge.hidden = false;
+                edge.color = { color: '#ffffff' };  // white
+                edge.width = 3;
+            } else {
+                edge.hidden = false;
+                edge.color = { color: 'rgba(180,180,180,0.1)' };
+                edge.width = 0.2;
+            }
+        });
 
-            network.body.data.edges.forEach(function(edge) {
-                var show = connectedNodes.includes(edge.from) && connectedNodes.includes(edge.to);
-                edge.hidden = !show;
-            });
-
-            network.redraw();
-        }
+        network.redraw();
     }
+}
+network.on("click", highlightConnectedNodes);
+</script>
 
-    network.on("click", highlightConnectedNodes);
-    </script>
     """
 
     html_content = html_content.replace("</body>", custom_js + "\n</body>")
