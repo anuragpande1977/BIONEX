@@ -21,7 +21,7 @@ st.write("Python version:", os.sys.version)
 st.write("Installed packages:")
 st.write(subprocess.run(["pip", "freeze"], capture_output=True, text=True).stdout)
 
-st.set_option('server.headless', True)
+
 
 
 def download_and_load_model():
