@@ -206,6 +206,17 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
 
 # Streamlit UI
 st.title("PubMed Research Navigator & Biomedical Entity Visualizer")
+# Ensure SpaCy model is loaded and available globally via session state
+if "nlp_model" not in st.session_state:
+    try:
+        st.session_state["nlp_model"] = download_and_load_model()
+        st.write("BIOMEDICAL model loaded and stored.")
+    except Exception as e:
+        st.error(f"Failed to load model: {e}")
+        st.stop()
+
+# Assign globally used nlp
+nlp = st.session_state["nlp_model"]
 
 # Store data in session state to persist across interactions
 if "df" not in st.session_state:
