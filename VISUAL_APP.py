@@ -26,29 +26,38 @@ st.set_option('server.headless', True)
 
 
 def download_and_load_model():
+    import gdown
+    import zipfile
+
     base_dir = "/tmp/model/en_ner_bc5cdr_md"
     nested_model_dir = "/tmp/model/en_ner_bc5cdr_md/en_ner_bc5cdr_md-0.4.0"
     zip_path = "/tmp/model/en_ner_bc5cdr_md.zip"
     config_path = os.path.join(nested_model_dir, "config.cfg")
     download_url = "https://drive.google.com/uc?id=1kjTjVdmtLJSu7BFWMn2HMiB7eTSdmqhy"
 
-    if not os.path.exists(nested_model_dir) or not os.path.exists(config_path):
-        os.makedirs(base_dir, exist_ok=True)
-        gdown.download(download_url, zip_path, quiet=False)
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall("/tmp/model")
+    try:
         if not os.path.exists(config_path):
-            raise FileNotFoundError("Model extraction failed.")
+            st.write("Model not found. Starting download...")
+            os.makedirs(base_dir, exist_ok=True)
 
-    return spacy.load(nested_model_dir)
+            output_path = gdown.download(download_url, zip_path, quiet=False)
+            if not output_path or not os.path.exists(zip_path):
+                raise RuntimeError("Download failed or file not found after download.")
 
-# Initialize SpaCy model
-try:
-    nlp = download_and_load_model()
-    st.write("BIOMEDICAL models loaded successfully.")
-except Exception as e:
-    st.error(f"Failed to load model: {e}")
-    st.stop()
+            st.write("Download complete. Extracting...")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall("/tmp/model")
+
+            if not os.path.exists(config_path):
+                raise FileNotFoundError("Extraction complete, but config.cfg not found.")
+
+        st.write("Loading SpaCy model...")
+        return spacy.load(nested_model_dir)
+
+    except Exception as e:
+        st.error(f"Failed to download or load the model: {e}")
+        raise e
+
 
 # PubMed Search Functions
 def construct_query(search_term, mesh_term, choice):
