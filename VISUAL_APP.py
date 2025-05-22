@@ -286,7 +286,25 @@ if "html_path" not in st.session_state:
 email = st.text_input("Enter your email for PubMed access:")
 search_term = st.text_input("Enter search term:")
 mesh_term = st.text_input("Optional MeSH term:")
-article_choice = st.selectbox("Select article type:", ["Clinical Trials", "Meta-Analysis", "Randomized Controlled Trials", "Reviews"])
+article_choice = st.selectbox(
+    "Select article type:",
+    [
+        "All Articles",
+        "Clinical Trial",
+        "Meta-Analysis",
+        "Randomized Controlled Trial",
+        "Review",
+        "Case Reports",
+        "Comparative Study",
+        "Observational Study",
+        "Controlled Clinical Trial",
+        "Evaluation Study",
+        "Multicenter Study",
+        "Practice Guideline",
+        "Validation Study"
+    ]
+)
+
 num_articles = st.number_input("Number of articles to fetch:", min_value=1, max_value=100, value=10)
 
 # Fetch Articles and Download Excel
