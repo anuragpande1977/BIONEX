@@ -68,14 +68,16 @@ def construct_query(search_term, mesh_term, choice):
     }
 
     query = f"({search_term})"
-    
-    if choice in article_types:
-        query += f" AND {article_types[choice]}"
+
+    # Only apply article type filter if not "All Articles"
+    if choice != "All Articles":
+        query += f" AND {article_types.get(choice, '')}"
 
     if mesh_term:
         query += f" AND {mesh_term}[MeSH Terms]"
 
     return query
+
 
 
 def fetch_abstracts(query, num_articles, email):
