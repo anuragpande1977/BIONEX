@@ -173,6 +173,7 @@ def visualize_graph_interactive(kg_df, entity_to_titles):
     # Save the graph to HTML with full page width and height
     html_path = "graph_download.html"
     net.save_graph(html_path)
+    
 with open(html_path, "r") as file:
     html_content = file.read()
 
