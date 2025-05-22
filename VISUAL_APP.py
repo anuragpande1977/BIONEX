@@ -12,7 +12,6 @@ import subprocess
 
 
 
-
 st.write("Installed packages:")
 st.write(subprocess.run(["pip", "freeze"], capture_output=True, text=True).stdout)
 
